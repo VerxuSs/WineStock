@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+
+  db:
+    image: mysql
+    container_name: $CONTAINER_MYSQL
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - db
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: $CONTAINER_PMA
+    depends_on:
+      - db
+    ports:
+      - "${PMA_PORT:-8080}:80"
+    environment:
+      PMA_HOST: db
+    networks:
+      - db
+
+  symfony:
+    container_name: $CONTAINER_PHP
+    build:
+      context: config/docker/php
+      args:
+        UID: $UID
+        GID: $GID
+        USERNAME: $USERNAME
+    working_dir: /var/www/html
+    env_file:
+      - .env
+    volumes:
+      - ${PHP_APP}:/var/www/html
+      - ./.env:/var/www/html/.env
+    ports:
+      - "${SF_PORT:-8000}:80"
+    networks:
+      - db
+
+
+networks:
+  db:
+
+volumes:
+  db-data:
